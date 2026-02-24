@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aku Jago Mengetik - Belajar Mengetik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Comic Neue', cursive;
+            background-color: #f0f9ff;
+            background-image: radial-gradient(#bae6fd 2px, transparent 2px);
+            background-size: 30px 30px;
+            user-select: none; /* Mencegah seleksi teks agar fokus main */
+        }
+
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 4px solid #e0f2fe;
+            width: 100%;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .level-badge {
+            background-color: #fbbf24;
+            color: #78350f;
+            font-weight: bold;
+            padding: 0.5rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 1.25rem;
+            border: 3px solid #f59e0b;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .target-word {
+            font-size: 4rem;
+            color: #0ea5e9;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 0px #bae6fd;
+            letter-spacing: 2px;
+        }
+
+        .input-area {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 2rem;
+            min-height: 80px;
+        }
+
+        .letter-box {
+            width: 60px;
+            height: 70px;
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #475569;
+            background-color: #f8fafc;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .letter-box.active {
+            border-color: #3b82f6;
+            background-color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .letter-box.correct {
+            border-color: #22c55e;
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+
+        .letter-box.wrong {
+            border-color: #ef4444;
+            background-color: #fee2e2;
+            color: #991b1b;
+            animation: shake 0.5s;
+        }
+
+        .letter-box.space {
+            width: 40px;
+            border: none;
+            background: transparent;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .keyboard-hint {
+            font-size: 1.1rem;
+            color: #64748b;
+            text-align: center;
+            margin-top: 1rem;
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .key-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-shadow: 0 2px 0 #cbd5e1;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 0 2px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 15px;
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #10b981;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            text-align: center;
+            width: 100%;
+        }
+        .screen.active {
+            display: block;
+        }
+
+        .btn-start {
+            background-color: #3b82f6;
+            color: white;
+            font-size: 1.5rem;
+            padding: 1rem 3rem;
+            border-radius: 1rem;
+            border-bottom: 6px solid #1d4ed8;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .btn-start:active {
+            transform: translateY(4px);
+            border-bottom: 2px solid #1d4ed8;
+        }
+
+        /* Mobile Input Hack */
+        #hidden-input {
+            opacity: 0;
+            position: absolute;
+            top: -1000px;
+        }
+
+        .category-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        
+        <!-- START SCREEN -->
+        <div id="start-screen" class="screen active card">
+            <h1 class="text-5xl font-bold text-blue-600 mb-4">⌨️ Aku Jago Mengetik</h1>
+            <p class="text-xl text-gray-600 mb-8">Belajar mengetik sambil bermain!</p>
+            <div class="grid grid-cols-2 gap-4 mb-8 text-left text-lg text-gray-700 bg-blue-50 p-6 rounded-xl">
+                <div>🌐 Internet & Teknologi</div>
+                <div>🌙 Puasa Ramadhan</div>
+                <div>🌳 Lingkungan Hidup</div>
+                <div>✨ Latihan Spasi & Hapus</div>
+            </div>
+            <button onclick="startGame()" class="btn-start">Mulai Mengetik</button>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game-screen" class="screen card">
+            <div class="flex justify-between items-center mb-4">
+                <div id="level-indicator" class="level-badge">Level 1</div>
+                <div class="text-gray-500 font-bold" id="score">⭐ 0</div>
+            </div>
+
+            <div id="category-display" class="category-icon">💻</div>
+            
+            <div id="target-text" class="target-word">mouse</div>
+
+            <!-- Visual representation of typed letters -->
+            <div id="input-container" class="input-area" onclick="focusInput()">
+                <!-- Letter boxes will be generated here -->
+            </div>
+
+            <!-- Hidden input for mobile keyboard support -->
+            <input type="text" id="hidden-input" autocomplete="off" autocorrect="off" spellcheck="false">
+
+            <div class="keyboard-hint">
+                Gunakan keyboard komputermu.<br>
+                Tekan <span class="key-badge">Space</span> untuk spasi, <span class="key-badge">Backspace</span> untuk hapus.
+            </div>
+
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- FINISH SCREEN -->
+        <div id="finish-screen" class="screen card">
+            <div class="text-6xl mb-4">🏆</div>
+            <h1 class="text-4xl font-bold text-green-600 mb-4">Hore! Kamu Hebat!</h1>
+            <p class="text-xl text-gray-600 mb-8">Kamu sudah menyelesaikan semua level.</p>
+            <p class="text-2xl font-bold text-blue-600 mb-8">Skor Akhir: <span id="final-score">0</span></p>
+            <button onclick="location.reload()" class="btn-start">Main Lagi</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GAME DATA (30 Levels) ---
+        // Mixed topics: Internet (Tech), Ramadan, Environment (Env)
+        const levels = [
+            { word: "mouse", category: "💻", theme: "Teknologi" },
+            { word: "pohon", category: "🌳", theme: "Lingkungan" },
+            { word: "puasa", category: "🌙", theme: "Ramadhan" },
+            { word: "wifi", category: "📡", theme: "Internet" },
+            { word: "air", category: "💧", theme: "Lingkungan" },
+            { word: "sahur", category: "🍚", theme: "Ramadhan" },
+            { word: "monitor", category: "🖥️", theme: "Teknologi" },
+            { word: "daun", category: "🍃", theme: "Lingkungan" },
+            { word: "buka", category: "🥤", theme: "Ramadhan" },
+            { word: "data", category: "💾", theme: "Teknologi" },
+            // Level 11-20
+            { word: "bunga", category: "🌺", theme: "Lingkungan" },
+            { word: "imsak", category: "🕌", theme: "Ramadhan" },
+            { word: "robot", category: "🤖", theme: "Teknologi" },
+            { word: "taman", category: "🏡", theme: "Lingkungan" },
+            { word: "masjid", category: "🕌", theme: "Ramadhan" },
+            { word: "tablet", category: "📱", theme: "Teknologi" },
+            { word: "hutan", category: "🌲", theme: "Lingkungan" },
+            { word: "sabar", category: "😌", theme: "Ramadhan" },
+            { word: "ketik", category: "⌨️", theme: "Teknologi" },
+            { word: "sungai", category: "🌊", theme: "Lingkungan" },
+            // Level 21-30 (2 words / Space practice)
+            { word: "buka puasa", category: "🌙", theme: "Ramadhan" },
+            { word: "main game", category: "🎮", theme: "Teknologi" },
+            { word: "jaga bumi", category: "🌍", theme: "Lingkungan" },
+            { word: "sahur yuk", category: "🍚", theme: "Ramadhan" },
+            { word: "kirim chat", category: "💬", theme: "Internet" },
+            { word: "buang sampah", category: "🗑️", theme: "Lingkungan" },
+            { word: "sholat ied", category: "🙏", theme: "Ramadhan" },
+            { word: "pakai laptop", category: "💻", theme: "Teknologi" },
+            { word: "tanam pohon", category: "🌱", theme: "Lingkungan" },
+            { word: "anak pintar", category: "🎓", theme: "Umum" }
+        ];
+
+        // --- STATE VARIABLES ---
+        let currentLevelIndex = 0;
+        let userInput = "";
+        let score = 0;
+        let isProcessing = false; // Prevent typing while animation plays
+
+        // --- DOM ELEMENTS ---
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const finishScreen = document.getElementById('finish-screen');
+        
+        const levelIndicator = document.getElementById('level-indicator');
+        const scoreDisplay = document.getElementById('score');
+        const categoryIcon = document.getElementById('category-display');
+        const targetText = document.getElementById('target-text');
+        const inputContainer = document.getElementById('input-container');
+        const hiddenInput = document.getElementById('hidden-input');
+        const progressBar = document.getElementById('progress-bar');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        // --- INITIALIZATION ---
+        function startGame() {
+            startScreen.classList.remove('active');
+            gameScreen.classList.add('active');
+            currentLevelIndex = 0;
+            score = 0;
+            loadLevel();
+            focusInput();
+        }
+
+        function loadLevel() {
+            const level = levels[currentLevelIndex];
+            userInput = "";
+            hiddenInput.value = "";
+            isProcessing = false;
+
+            // Update UI
+            levelIndicator.innerText = `Level ${currentLevelIndex + 1}`;
+            scoreDisplay.innerText = `⭐ ${score}`;
+            categoryIcon.innerText = level.category;
+            targetText.innerText = level.word;
+            
+            // Render Empty Boxes based on target word length
+            renderInputBoxes();
+
+            // Update Progress Bar
+            const progress = (currentLevelIndex / levels.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function renderInputBoxes() {
+            inputContainer.innerHTML = '';
+            const targetWord = levels[currentLevelIndex].word;
+            
+            // Loop through each character of target word
+            for (let i = 0; i < targetWord.length; i++) {
+                const char = targetWord[i];
+                const box = document.createElement('div');
+                
+                if (char === ' ') {
+                    box.className = 'letter-box space'; // Visual gap for space
+                } else {
+                    box.className = 'letter-box';
+                }
+
+                // If user has typed this far, fill it
+                if (i < userInput.length) {
+                    box.innerText = userInput[i];
+                    
+                    // Check correctness
+                    if (userInput[i].toLowerCase() === char.toLowerCase()) {
+                        box.classList.add('correct');
+                    } else {
+                        box.classList.add('wrong');
+                    }
+                } else if (i === userInput.length) {
+                    // Current active box (cursor position)
+                    box.classList.add('active');
+                }
+
+                inputContainer.appendChild(box);
+            }
+        }
+
+        // --- INPUT HANDLING ---
+        
+        // Focus hidden input for mobile keyboard or general focus
+        function focusInput() {
+            hiddenInput.focus();
+        }
+        
+        // Listen for keydown (Physical Keyboard) & Input (Mobile Virtual Keyboard)
+        hiddenInput.addEventListener('input', (e) => {
+            if (isProcessing) return;
+
+            const val = e.target.value;
+            const targetWord = levels[currentLevelIndex].word;
+            
+            // Handling backspace or deletion via mobile keyboard logic
+            // Ideally we sync userInput exactly with input value, but filter for length
+            if (val.length <= targetWord.length) {
+                userInput = val;
+                renderInputBoxes();
+                checkWinCondition();
+            } else {
+                // Prevent typing more than needed
+                hiddenInput.value = userInput;
+            }
+        });
+
+        // Additional handling for physical keyboard to ensure smooth experience
+        // Because 'input' event sometimes lags on specific Android browsers with spaces
+        document.addEventListener('keydown', (e) => {
+            if (!gameScreen.classList.contains('active')) return;
+            focusInput();
+        });
+
+        // --- GAME LOGIC ---
+
+        function checkWinCondition() {
+            const currentWord = levels[currentLevelIndex].word.toLowerCase();
+            const userWord = userInput.toLowerCase();
+
+            // Check if full length reached
+            if (userWord.length === currentWord.length) {
+                if (userWord === currentWord) {
+                    // Correct!
+                    isProcessing = true;
+                    playSound("success");
+                    score += 10;
+                    scoreDisplay.innerText = `⭐ ${score}`;
+                    
+                    setTimeout(() => {
+                        nextLevel();
+                    }, 800); // Delay to show green boxes
+                } else {
+                    // Finished typing but wrong
+                    playSound("error");
+                    // Optionally shake the container or just leave the red boxes
+                }
+            }
+        }
+
+        function nextLevel() {
+            currentLevelIndex++;
+            if (currentLevelIndex < levels.length) {
+                loadLevel();
+            } else {
+                gameFinished();
+            }
+        }
+
+        function gameFinished() {
+            gameScreen.classList.remove('active');
+            finishScreen.classList.add('active');
+            finalScoreDisplay.innerText = score;
+            progressBar.style.width = `100%`;
+        }
+
+        // --- AUDIO SIMULATION (Visual Only for single file safety) ---
+        function playSound(type) {
+            // In a real multi-file app, we would play Audio() here.
+            // For this constraint, we rely on CSS animations (green flash/shake)
+            if (type === 'success') {
+                targetText.style.color = '#22c55e';
+                setTimeout(() => targetText.style.color = '#0ea5e9', 500);
+            }
+        }
+
+    </script>
+</body>
+</html>
